@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교재 편집기 | 과학 학습 시스템</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+:root {
+  --bg:#f0ecf8; --sidebar-bg:#1e1b3a; --sidebar-text:#e0ddf0;
+  --panel-bg:#fff; --border:#ddd8ec; --accent:#6c5ce7; --accent2:#00b894;
+  --accent3:#e17055; --ink:#2d2b45; --ink-light:#6e6a8a;
+  --danger:#d63031; --shadow:0 2px 12px rgba(108,92,231,0.1); --radius:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOP BAR */
+.topbar{background:var(--sidebar-bg);height:52px;display:flex;align-items:center;padding:0 1.2rem;gap:.7rem;flex-shrink:0;border-bottom:2px solid var(--accent)}
+.topbar-title{font-family:'Noto Serif KR',serif;font-size:.95rem;font-weight:700;color:var(--sidebar-text);margin-right:.5rem;white-space:nowrap}
+.topbar-title::before{content:'✏️ '}
+.topbar-sep{flex:1}
+.tb-btn{padding:.38rem .8rem;border:none;border-radius:5px;font-family:'Noto Sans KR',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tb-btn-primary{background:var(--accent);color:#fff}.tb-btn-primary:hover{background:#5a4bd1}
+.tb-btn-success{background:var(--accent2);color:#fff}.tb-btn-success:hover{background:#00a381}
+.tb-btn-ghost{background:rgba(255,255,255,.1);color:var(--sidebar-text);border:1px solid rgba(255,255,255,.2)}.tb-btn-ghost:hover{background:rgba(255,255,255,.2)}
+.saved-badge{font-size:.7rem;color:var(--accent2);background:rgba(0,184,148,.15);padding:.2rem .7rem;border-radius:20px;border:1px solid rgba(0,184,148,.3);white-space:nowrap}
+
+/* LAYOUT */
+.editor-layout{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:200px;background:var(--sidebar-bg);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sidebar-header{padding:.8rem 1rem .5rem;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between}
+.sidebar-header span{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8884aa}
+.sidebar-add-btn{background:var(--accent);color:#fff;border:none;border-radius:4px;padding:.22rem .55rem;font-size:.72rem;cursor:pointer;font-weight:600;transition:opacity .15s}.sidebar-add-btn:hover{opacity:.8}
+.page-list{flex:1;overflow-y:auto;padding:.3rem}
+.page-list::-webkit-scrollbar{width:3px}.page-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15)}
+.page-item{display:flex;align-items:center;gap:5px;padding:.5rem .6rem;border-radius:6px;cursor:pointer;transition:background .12s;margin-bottom:2px;color:var(--sidebar-text)}
+.page-item:hover{background:rgba(255,255,255,.07)}.page-item.active{background:var(--accent)}
+.page-num-badge{background:rgba(255,255,255,.15);color:#fff;border-radius:3px;padding:.1rem .35rem;font-size:.68rem;font-weight:700;flex-shrink:0}
+.page-item.active .page-num-badge{background:rgba(255,255,255,.25)}
+.page-item-title{font-size:.8rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.page-delete-btn{background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.82rem;padding:.1rem .2rem;border-radius:3px;flex-shrink:0;transition:all .12s}.page-delete-btn:hover{color:#ff7675;background:rgba(255,118,117,.15)}
+.sidebar-move-btns{display:flex;padding:.4rem;border-top:1px solid rgba(255,255,255,.08)}
+.move-btn{flex:1;background:rgba(255,255,255,.06);border:none;color:#8884aa;padding:.35rem;font-size:.78rem;cursor:pointer;border-radius:4px;transition:all .12s}.move-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* CENTER 50/50 */
+.editor-center{flex:1;display:flex;overflow:hidden}
+.editor-main{width:50%;overflow-y:auto;padding:1.2rem;display:flex;flex-direction:column;gap:1rem;border-right:1px solid var(--border);min-height:0}
+.editor-main::-webkit-scrollbar{width:4px}.editor-main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.preview-panel{width:50%;background:var(--panel-bg);display:flex;flex-direction:column;overflow:hidden}
+.preview-header{padding:.75rem 1.1rem;border-bottom:1px solid var(--border);background:var(--sidebar-bg);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.preview-header span{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8884aa}
+#preview-frame{width:100%;flex:1;border:none;background:#f5f0e8}
+
+/* CARDS */
+.editor-card{background:var(--panel-bg);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:.65rem 1.1rem;background:linear-gradient(135deg,#f8f6ff,#f0ecf8);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-light)}
+.card-body{padding:1rem}
+.form-row{display:flex;flex-direction:column;gap:3px;margin-bottom:.8rem}.form-row:last-child{margin-bottom:0}
+.form-row label{font-size:.7rem;font-weight:700;color:var(--ink-light);text-transform:uppercase;letter-spacing:.06em}
+input[type="text"],textarea,select{font-family:'Noto Sans KR',sans-serif;font-size:.86rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:6px;background:#faf9ff;color:var(--ink);width:100%;transition:border-color .15s}
+input[type="text"]:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,92,231,.1)}
+textarea{resize:vertical;min-height:75px;line-height:1.65}
+.hint{font-size:.7rem;color:#aaa;margin-top:2px;line-height:1.5}
+.hint code{background:#f0ecf8;padding:1px 4px;border-radius:3px;font-size:.72rem;color:var(--accent)}
+
+/* CONTENT EDITOR */
+.content-editor-wrap{display:flex;flex-direction:column;gap:0}
+.content-toolbar{display:flex;flex-wrap:wrap;gap:.3rem;padding:.55rem .8rem;background:#f5f3ff;border:1px solid var(--border);border-radius:7px 7px 0 0}
+.tool-btn{display:flex;align-items:center;gap:3px;background:#fff;border:1px solid var(--border);border-radius:5px;padding:.26rem .6rem;font-size:.74rem;cursor:pointer;color:var(--ink-light);font-family:'Noto Sans KR',sans-serif;font-weight:600;transition:all .12s}
+.tool-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Inline popover */
+.inline-popover{background:#fff;border:2px solid var(--accent);border-radius:0 0 7px 7px;padding:.6rem .8rem;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;border-top:none}
+.inline-popover-label{font-size:.74rem;font-weight:700;color:var(--accent);white-space:nowrap}
+.inline-popover input,.inline-popover select{flex:1;min-width:80px;font-size:.82rem;padding:.3rem .55rem;border-radius:5px}
+.popover-ok{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:.3rem .85rem;font-size:.76rem;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap}
+.popover-cancel{background:#eee;color:var(--ink);border:none;border-radius:5px;padding:.3rem .7rem;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+
+/* Content main textarea — fills all available vertical space */
+.content-main-ta{width:100%;flex:1;min-height:220px;font-family:'Noto Sans KR',sans-serif;font-size:.87rem;line-height:1.75;padding:.85rem 1rem;border:1px solid var(--border);border-top:none;border-radius:0 0 7px 7px;background:#fdfcff;color:var(--ink);resize:none;transition:border-color .15s;display:block}
+.content-main-ta:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,92,231,.08)}
+/* Make the content section card fill the editor height */
+.content-editor-wrap{display:flex;flex-direction:column;flex:1;min-height:0}
+#editor-content{flex:1;min-height:0}
+#editor-content > .editor-card:last-child{flex:1;min-height:0;display:flex;flex-direction:column}
+#editor-content > .editor-card:last-child .section-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto}
+#editor-content > .editor-card:last-child .section-body > div[class="content-editor-wrap"]{flex:1;min-height:0}
+
+/* Tabs */
+.section-tabs{display:flex;border-bottom:1px solid var(--border);background:#f5f3ff}
+.sec-tab{flex:1;padding:.55rem 0;text-align:center;font-size:.75rem;font-weight:600;cursor:pointer;color:var(--ink-light);border-bottom:2px solid transparent;transition:all .15s}.sec-tab:hover{color:var(--accent)}.sec-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:#fff}
+.section-body{padding:1rem}
+
+/* Items */
+.item-list{display:flex;flex-direction:column;gap:.7rem}
+.item-card{border:1px solid var(--border);border-radius:var(--radius);background:#fdfcff;overflow:hidden}
+.item-card-header{padding:.5rem .85rem;background:#f5f3ff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.item-badge{font-size:.65rem;font-weight:700;background:var(--accent);color:#fff;padding:.12rem .45rem;border-radius:3px}
+.item-card-title{font-size:.8rem;font-weight:600;color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-del-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:.88rem;padding:2px 4px;transition:color .12s}.item-del-btn:hover{color:var(--danger)}
+.item-card-body{padding:.85rem;display:flex;flex-direction:column;gap:.55rem}
+.item-row{display:flex;gap:.55rem}.item-row>*{flex:1}
+.item-card-body label,.item-row label{font-size:.68rem;font-weight:600;color:var(--ink-light);display:block;margin-bottom:2px}
+.add-item-btn{background:none;border:1px dashed var(--border);border-radius:6px;padding:.55rem;width:100%;color:var(--ink-light);font-size:.8rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s;margin-top:.5rem}.add-item-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(108,92,231,.04)}
+
+.no-page{display:flex;align-items:center;justify-content:center;height:100%;color:#bbb;font-size:.86rem;flex-direction:column;gap:.5rem}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,30,.6);z-index:100;align-items:center;justify-content:center}.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.6rem;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal h3{margin-bottom:1rem;font-size:.95rem}
+.modal-btns{display:flex;gap:.55rem;margin-top:1.1rem}
+.modal-btns button{flex:1;padding:.55rem;border:none;border-radius:6px;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer}
+.modal-ok{background:var(--accent);color:#fff}.modal-cancel{background:#eee;color:var(--ink)}
+.img-help-body{font-size:.83rem;line-height:1.78;color:var(--ink-light)}
+.img-help-step{background:#f8f6ff;border-left:3px solid var(--accent);padding:.55rem .85rem;border-radius:0 6px 6px 0;margin:.4rem 0;font-size:.82rem}
+.img-help-step strong{color:var(--ink)}
+.img-help-step code{background:#f0ecf8;padding:1px 5px;border-radius:3px;font-size:.78rem;color:var(--accent)}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;padding:.55rem 1.3rem;border-radius:30px;font-size:.8rem;font-weight:600;opacity:0;transition:all .3s;pointer-events:none;z-index:200}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">과학 교재 편집기</span>
+  <span class="saved-badge" id="saved-badge">💾 저장됨</span>
+  <div class="topbar-sep"></div>
+  <button class="tb-btn tb-btn-ghost" onclick="importJSON()">📂 불러오기</button>
+  <button class="tb-btn tb-btn-ghost" onclick="exportJSON()">💾 JSON 저장</button>
+  <button class="tb-btn tb-btn-success" onclick="exportForStudent()">📤 학생용 내보내기</button>
+  <button class="tb-btn tb-btn-primary" onclick="openStudentPreview()">👁 학습 화면 열기</button>
+</div>
+<input type="file" id="json-file-input" accept=".json" style="display:none" onchange="loadJSONFile(event)">
+
+<div class="editor-layout">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span>페이지</span>
+      <button class="sidebar-add-btn" onclick="addPage()">+ 추가</button>
+    </div>
+    <div class="page-list" id="page-list"></div>
+    <div class="sidebar-move-btns">
+      <button class="move-btn" onclick="movePage(-1)">▲ 위로</button>
+      <button class="move-btn" onclick="movePage(1)">▼ 아래로</button>
+    </div>
+  </div>
+
+  <div class="editor-center">
+    <div class="editor-main" id="editor-main">
+      <div class="no-page" id="no-page-msg"><div style="font-size:2.2rem">📄</div><div>왼쪽에서 페이지를 선택하거나 추가하세요.</div></div>
+      <div id="editor-content" style="display:none;flex-direction:column;gap:1rem;"></div>
+    </div>
+    <div class="preview-panel">
+      <div class="preview-header">
+        <span>📱 미리보기</span>
+        <button class="tb-btn tb-btn-ghost" style="font-size:.7rem;padding:.22rem .55rem" onclick="refreshPreview()">새로고침</button>
+      </div>
+      <iframe id="preview-frame" style="width:100%;flex:1;border:none;background:#f5f0e8"></iframe>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h3 id="confirm-msg">삭제하시겠습니까?</h3>
+    <div class="modal-btns">
+      <button class="modal-ok" id="confirm-ok">확인</button>
+      <button class="modal-cancel" onclick="closeConfirm()">취소</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="img-help-modal">
+  <div class="modal" style="max-width:500px">
+    <h3 style="margin-bottom:.9rem">🖼 이미지 삽입 방법</h3>
+    <div class="img-help-body">
+      <p style="margin-bottom:.6rem">링크 탭에서 타입을 <strong>image</strong>로 선택한 뒤, 내용에 아래 중 하나를 입력하세요.</p>
+      <div class="img-help-step"><strong>방법 1 — 인터넷 이미지 URL</strong><br>이미지 우클릭 → "이미지 주소 복사" 후 붙여넣기<br><code>https://example.com/photo.jpg</code></div>
+      <div class="img-help-step"><strong>방법 2 — 플레이스홀더 (설명 텍스트)</strong><br>이미지 없이 설명만 표시할 때<br><code>placeholder|여기에 이미지 설명을 입력</code></div>
+      <div class="img-help-step"><strong>💡 가장 쉬운 방법</strong><br>① Google 이미지 검색 → 원하는 이미지 클릭<br>② 이미지 위 우클릭 → <strong>"이미지 주소 복사"</strong><br>③ 내용란에 Ctrl+V 붙여넣기</div>
+      <p style="margin-top:.55rem;font-size:.75rem;color:#aaa">※ 일부 사이트는 외부 링크 차단으로 표시 안 될 수 있습니다.</p>
+    </div>
+    <div class="modal-btns"><button class="modal-ok" onclick="document.getElementById('img-help-modal').classList.remove('active')">확인</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// SAMPLE DATA
+// ══════════════════════════════════════
+const SAMPLE_DATA = {
+  terms: [
+    {word:"상태 변화",definition:"물질이 고체·액체·기체 사이에서 모습이 변하는 것",description:"온도와 압력에 따라 일어나며 입자의 배열과 운동 상태가 달라집니다.",example:"물→얼음(응고), 물→수증기(기화)"},
+    {word:"응고",definition:"액체가 고체로 변화하는 과정",description:"열에너지를 방출하면서 액체가 고체로 변화합니다.",example:"물→얼음 (0°C)"},
+    {word:"증발",definition:"액체 표면에서 기체로 변화하는 현상",description:"온도가 높을수록, 표면적이 넓을수록 빠르게 일어납니다.",example:"젖은 빨래가 마르는 것"},
+    {word:"융해",definition:"고체가 액체로 변화하는 과정",description:"열에너지를 흡수하면서 고체가 액체로 변화합니다.",example:"얼음→물 (0°C)"},
+    {word:"반사",definition:"빛이 표면에 부딪혀 되돌아오는 현상",description:"입사각 = 반사각 (법선 기준)으로 측정합니다.",example:"거울에 얼굴이 비치는 것"},
+    {word:"정반사",definition:"매끄러운 표면에서 빛이 한 방향으로 반사",description:"거울처럼 매끄러운 표면에서 평행한 빛이 같은 방향으로 반사됩니다.",example:"유리창에 자신의 모습이 보이는 것"},
+    {word:"난반사",definition:"거친 표면에서 빛이 여러 방향으로 흩어짐",description:"표면이 거칠면 빛이 각 지점에서 다른 방향으로 반사됩니다.",example:"흰 종이에 글씨가 보이는 것"}
+  ],
+  pages: [
+    {
+      title: "물질의 상태 변화",
+      content: "<p>물질은 [용어:상태 변화]를 통해 고체, 액체, 기체의 세 가지 상태로 존재할 수 있습니다.</p>\n<p>물은 [용어:응고]에 의해 얼음이 되고, [용어:증발]에 의해 수증기가 됩니다.</p>\n<p>자세한 내용 → [링크:0] &nbsp; [링크:1]</p>\n<h3>열에너지와 상태 변화</h3>\n<p>[용어:융해]는 고체가 액체로 변화하는 과정으로, 열에너지를 흡수합니다.</p>",
+      links: [
+        {text:"📊 상태 변화 도표",type:"html",data:"<div style='font-family:sans-serif;padding:1rem;background:#f8f4f0;border-radius:8px'><h4 style='margin-bottom:.8rem;color:#1a1a2e'>🔄 상태 변화 정리</h4><table style='width:100%;border-collapse:collapse;font-size:.85rem'><tr style='background:#1a1a2e;color:#fff'><th style='padding:.45rem;text-align:left'>변화</th><th style='padding:.45rem'>방향</th><th style='padding:.45rem'>열</th></tr><tr><td style='padding:.4rem'>융해</td><td>고체→액체</td><td style='color:#2d6a8e'>흡수</td></tr><tr style='background:#f5f5f5'><td style='padding:.4rem'>응고</td><td>액체→고체</td><td style='color:#c44569'>방출</td></tr><tr><td style='padding:.4rem'>기화</td><td>액체→기체</td><td style='color:#2d6a8e'>흡수</td></tr></table></div>"},
+        {text:"🎬 유튜브 강의",type:"link",data:"https://www.youtube.com/watch?v=dQw4w9WgXcQ|유튜브 강의"},
+        {text:"🔬 실험 방법",type:"text",data:"실험: 얼음이 녹는 과정\n① 얼음을 비커에 넣는다.\n② 알코올램프로 가열한다.\n③ 0°C에서 온도가 일정함을 관찰한다."}
+      ],
+      problems: [
+        {question:"물이 얼음으로 변하는 상태 변화를 무엇이라고 하나요?",answer:"응고",explanation:"액체(물)가 고체(얼음)로 변하는 과정은 응고입니다."},
+        {question:"상태 변화에서 열에너지를 흡수하는 변화를 모두 고르세요.",answer:"융해, 기화, 승화(고체→기체)",explanation:"고체→액체(융해), 액체→기체(기화), 고체→기체(승화)는 열에너지를 흡수합니다."}
+      ]
+    },
+    {
+      title: "빛의 반사",
+      content: "<p>빛은 직진하다가 물체 표면에 부딪히면 [용어:반사]됩니다.</p>\n<p>반사 법칙 보기 → [링크:0]</p>\n<h3>정반사와 난반사</h3>\n<p>매끄러운 표면에서는 [용어:정반사], 거친 표면에서는 [용어:난반사]가 일어납니다.</p>",
+      links: [
+        {text:"📐 반사 법칙",type:"text",data:"빛의 반사 법칙\n① 입사각 = 반사각\n② 입사광선, 법선, 반사광선은 같은 평면에 있다."},
+        {text:"🔗 위키백과",type:"link",data:"https://ko.wikipedia.org/wiki/반사_(물리학)|빛의 반사 - 위키백과"}
+      ],
+      problems: [
+        {question:"입사각이 30°일 때 반사각은?",answer:"30°",explanation:"반사 법칙: 입사각 = 반사각"},
+        {question:"거울에서 일어나는 반사는?",answer:"정반사",explanation:"거울은 표면이 매끄러워 정반사가 일어납니다."}
+      ]
+    }
+  ]
+};
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let data = {pages:[]};
+let currentPageIdx = -1;
+let activeSection = 'content';
+let confirmCallback = null;
+let pendingInlineType = null;
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function init() {
+  const saved = localStorage.getItem('scienceEditorData');
+  if (saved) {
+    try {
+      data = JSON.parse(saved);
+      // Migrate: if no global terms but pages have terms, merge them up
+      if (!data.terms) {
+        data.terms = [];
+        data.pages.forEach(p => {
+          if (p.terms) {
+            p.terms.forEach(t => {
+              if (!data.terms.some(x => x.word === t.word)) data.terms.push(t);
+            });
+          }
+        });
+      }
+    } catch(e) { data = JSON.parse(JSON.stringify(SAMPLE_DATA)); }
+  } else {
+    data = JSON.parse(JSON.stringify(SAMPLE_DATA));
+  }
+  renderSidebar();
+  if (data.pages.length > 0) selectPage(0);
+}
+
+// ══════════════════════════════════════
+// AUTO SAVE
+// ══════════════════════════════════════
+let saveTimeout = null;
+function scheduleSave() {
+  clearTimeout(saveTimeout);
+  const b = document.getElementById('saved-badge');
+  b.textContent = '✏️ 편집 중...'; b.style.color = '#e17055';
+  saveTimeout = setTimeout(() => { saveToLocalStorage(); refreshPreview(); }, 900);
+}
+function saveToLocalStorage() {
+  localStorage.setItem('scienceEditorData', JSON.stringify(data));
+  localStorage.setItem('scienceBookData', JSON.stringify(data));
+  const b = document.getElementById('saved-badge');
+  b.textContent = '💾 저장됨'; b.style.color = '#00b894';
+}
+
+// ══════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════
+function renderSidebar() {
+  const list = document.getElementById('page-list');
+  list.innerHTML = '';
+  data.pages.forEach((page, i) => {
+    const item = document.createElement('div');
+    item.className = 'page-item' + (i === currentPageIdx ? ' active' : '');
+    item.innerHTML = `<span class="page-num-badge">${i+1}</span><span class="page-item-title">${page.title||'(제목 없음)'}</span><button class="page-delete-btn" onclick="event.stopPropagation();confirmDeletePage(${i})">✕</button>`;
+    item.addEventListener('click', () => selectPage(i));
+    list.appendChild(item);
+  });
+}
+
+function selectPage(idx) {
+  currentPageIdx = idx; activeSection = 'content';
+  renderSidebar(); renderEditor(); refreshPreview();
+}
+
+function addPage() {
+  data.pages.push({title:`새 페이지 ${data.pages.length+1}`,content:'<p>본문 내용을 입력하세요.</p>',links:[],terms:[],problems:[]});
+  scheduleSave(); renderSidebar(); selectPage(data.pages.length-1);
+  showToast('✅ 새 페이지가 추가되었습니다.');
+}
+
+function confirmDeletePage(idx) {
+  showConfirm(`"${data.pages[idx].title}" 페이지를 삭제하시겠습니까?`, () => {
+    data.pages.splice(idx, 1);
+    if (currentPageIdx >= data.pages.length) currentPageIdx = data.pages.length-1;
+    scheduleSave(); renderSidebar();
+    if (currentPageIdx >= 0) { renderEditor(); refreshPreview(); }
+    else {
+      document.getElementById('editor-content').style.display = 'none';
+      document.getElementById('no-page-msg').style.display = 'flex';
+    }
+    showToast('🗑 페이지가 삭제되었습니다.');
+  });
+}
+
+function movePage(dir) {
+  if (currentPageIdx < 0) return;
+  const ni = currentPageIdx + dir;
+  if (ni < 0 || ni >= data.pages.length) return;
+  [data.pages[currentPageIdx], data.pages[ni]] = [data.pages[ni], data.pages[currentPageIdx]];
+  currentPageIdx = ni; scheduleSave(); renderSidebar(); renderEditor();
+}
+
+// ══════════════════════════════════════
+// EDITOR
+// ══════════════════════════════════════
+function renderEditor() {
+  if (currentPageIdx < 0 || currentPageIdx >= data.pages.length) return;
+  const page = data.pages[currentPageIdx];
+  document.getElementById('no-page-msg').style.display = 'none';
+  const c = document.getElementById('editor-content');
+  c.style.display = 'flex';
+  c.innerHTML = `
+  <div class="editor-card">
+    <div class="card-header"><span class="card-title">📄 페이지 정보</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <label>페이지 제목</label>
+        <input type="text" id="field-title" value="${esc(page.title)}" oninput="updateField('title',this.value)" placeholder="페이지 제목">
+      </div>
+    </div>
+  </div>
+  <div class="editor-card">
+    <div class="section-tabs">
+      <div class="sec-tab ${activeSection==='content'?'active':''}" onclick="switchSection('content')">📝 본문</div>
+      <div class="sec-tab ${activeSection==='links'?'active':''}" onclick="switchSection('links')">🔗 링크 (${page.links?.length||0})</div>
+      <div class="sec-tab ${activeSection==='terms'?'active':''}" onclick="switchSection('terms')">📖 용어 (${data.terms?.length||0})</div>
+      <div class="sec-tab ${activeSection==='problems'?'active':''}" onclick="switchSection('problems')">❓ 문제 (${page.problems?.length||0})</div>
+    </div>
+    <div class="section-body" id="section-body">${renderSectionContent(page)}</div>
+  </div>`;
+}
+
+function switchSection(sec) {
+  activeSection = sec;
+  const page = data.pages[currentPageIdx];
+  document.querySelectorAll('.sec-tab').forEach(t => {
+    const txt = t.textContent;
+    t.classList.toggle('active',
+      (sec==='content' && txt.includes('본문')) ||
+      (sec==='links' && txt.includes('링크')) ||
+      (sec==='terms' && txt.includes('용어')) ||
+      (sec==='problems' && txt.includes('문제'))
+    );
+    if (txt.includes('링크')) t.textContent = `🔗 링크 (${page.links?.length||0})`;
+    if (txt.includes('용어')) t.textContent = `📖 용어 (${page.terms?.length||0})`;
+    if (txt.includes('문제')) t.textContent = `❓ 문제 (${page.problems?.length||0})`;
+  });
+  document.getElementById('section-body').innerHTML = renderSectionContent(page);
+}
+
+function renderSectionContent(page) {
+  if (activeSection==='content') return renderContentSection(page);
+  if (activeSection==='links') return renderLinksSection(page);
+  if (activeSection==='terms') return renderTermsSection(page);
+  if (activeSection==='problems') return renderProblemsSection(page);
+  return '';
+}
+
+// ── CONTENT SECTION ──
+// Main editor: plain textarea (shows raw storage format: [링크:N], [용어:단어], <h3>…</h3>)
+// Enter = newline inside textarea naturally
+// "HTML 직접 편집" mode: same textarea, same data, just relabelled
+function renderContentSection(page) {
+  const raw = page.content || '';
+  return `<div class="content-editor-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem">
+    <span style="font-size:.7rem;font-weight:700;color:var(--ink-light);text-transform:uppercase;letter-spacing:.06em" id="content-mode-label">본문 편집</span>
+    <div style="display:flex;gap:.35rem">
+      <button class="tb-btn tb-btn-ghost" style="font-size:.7rem;padding:.2rem .55rem;background:#f5f3ff;color:var(--ink-light);border:1px solid var(--border)" id="toggle-raw-btn" onclick="toggleRaw()">HTML 직접 편집</button>
+      <button class="tb-btn tb-btn-ghost" style="font-size:.7rem;padding:.2rem .55rem;background:#f5f3ff;color:var(--ink-light);border:1px solid var(--border)" onclick="document.getElementById('img-help-modal').classList.add('active')">🖼 이미지 삽입법</button>
+    </div>
+  </div>
+  <div class="content-toolbar" id="content-toolbar-btns">
+    <button class="tool-btn" onclick="insertBlock('link')">🔗 링크 삽입</button>
+    <button class="tool-btn" onclick="insertBlock('term')">📖 용어 삽입</button>
+    <button class="tool-btn" onclick="insertBlock('h3')">📌 소제목</button>
+    <button class="tool-btn" onclick="insertBlock('p')">¶ 단락 태그</button>
+  </div>
+  <div id="inline-popover-area"></div>
+  <textarea class="content-main-ta" id="content-main-ta"
+    oninput="onContentInput(this)"
+    onkeyup="saveCaretPos(this)"
+    onclick="saveCaretPos(this)"
+    placeholder="본문을 입력하세요. Enter로 줄 바꿈, [링크:0] [용어:단어] <h3>소제목</h3> 사용 가능"
+  >${escAttr(raw)}</textarea>
+  <div class="hint" style="margin-top:.35rem">링크: <code>[링크:번호]</code> &nbsp; 용어: <code>[용어:단어명]</code> &nbsp; 소제목: <code>&lt;h3&gt;제목&lt;/h3&gt;</code> &nbsp; Enter = 줄바꿈</div>
+</div>`;
+}
+
+// Cursor position tracker
+let _caretPos = null;
+function saveCaretPos(ta) {
+  _caretPos = { start: ta.selectionStart, end: ta.selectionEnd };
+}
+
+function onContentInput(ta) {
+  data.pages[currentPageIdx].content = ta.value;
+  saveCaretPos(ta);
+  scheduleSave();
+}
+
+// toggleRaw: just changes label/hint — textarea is always the real editor
+function toggleRaw() {
+  const btn = document.getElementById('toggle-raw-btn');
+  const label = document.getElementById('content-mode-label');
+  const toolbar = document.getElementById('content-toolbar-btns');
+  const isHtml = btn.textContent.includes('본문 편집');
+  if (isHtml) {
+    // Switch back to normal mode
+    btn.textContent = 'HTML 직접 편집';
+    label.textContent = '본문 편집';
+    toolbar.style.display = '';
+  } else {
+    // Switch to HTML mode
+    btn.textContent = '본문 편집으로 전환';
+    label.textContent = 'HTML 직접 편집';
+    toolbar.style.display = 'none';
+  }
+}
+
+// ── INSERT BLOCK — inserts at cursor position in the main textarea ──
+function insertBlock(type) {
+  const area = document.getElementById('inline-popover-area');
+  area.innerHTML = '';
+  pendingInlineType = null;
+
+  if (type === 'h3') {
+    area.innerHTML = `<div class="inline-popover">
+      <span class="inline-popover-label">📌 소제목</span>
+      <input type="text" id="ipin" placeholder="소제목 텍스트" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmInsert();}">
+      <button class="popover-ok" onclick="confirmInsert()">삽입</button>
+      <button class="popover-cancel" onclick="cancelInsert()">✕</button>
+    </div>`;
+    pendingInlineType = 'h3';
+    document.getElementById('ipin').focus();
+
+  } else if (type === 'p') {
+    // 단락 태그: wrap selected or insert empty <p></p> at cursor
+    insertAtCursor('<p></p>');
+    showToast('✅ <p> 태그가 커서 위치에 삽입되었습니다.');
+    return;
+
+  } else if (type === 'link') {
+    const page = data.pages[currentPageIdx];
+    const links = page.links || [];
+    if (links.length === 0) { showToast('먼저 🔗 링크 탭에서 링크를 추가하세요.'); return; }
+    let opts = links.map((l,i) => `<option value="${i}">${i}번: ${l.text||''}</option>`).join('');
+    area.innerHTML = `<div class="inline-popover">
+      <span class="inline-popover-label">🔗 링크 선택</span>
+      <select id="ipin">${opts}</select>
+      <button class="popover-ok" onclick="confirmInsert()">삽입</button>
+      <button class="popover-cancel" onclick="cancelInsert()">✕</button>
+    </div>`;
+    pendingInlineType = 'link';
+
+  } else if (type === 'term') {
+    const page = data.pages[currentPageIdx];
+    const terms = page.terms || [];
+    let opts = '<option value="">-- 직접 입력 --</option>' +
+      terms.map(t => `<option value="${esc(t.word)}">${t.word}</option>`).join('');
+    area.innerHTML = `<div class="inline-popover">
+      <span class="inline-popover-label">📖 용어</span>
+      <select id="ipin-sel" onchange="document.getElementById('ipin').value=this.value||''">${opts}</select>
+      <input type="text" id="ipin" placeholder="또는 직접 입력" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmInsert();}">
+      <button class="popover-ok" onclick="confirmInsert()">삽입</button>
+      <button class="popover-cancel" onclick="cancelInsert()">✕</button>
+    </div>`;
+    pendingInlineType = 'term';
+  }
+}
+
+// Insert a string at current caret position in the main textarea
+function insertAtCursor(token) {
+  const ta = document.getElementById('content-main-ta');
+  if (!ta) return;
+  ta.focus();
+  const start = (_caretPos && _caretPos.start != null) ? _caretPos.start : ta.selectionStart;
+  const end   = (_caretPos && _caretPos.end   != null) ? _caretPos.end   : ta.selectionEnd;
+  const val = ta.value;
+  const newVal = val.slice(0, start) + token + val.slice(end);
+  ta.value = newVal;
+  // Restore cursor after token
+  const newPos = start + token.length;
+  ta.selectionStart = ta.selectionEnd = newPos;
+  _caretPos = { start: newPos, end: newPos };
+  // Sync data
+  data.pages[currentPageIdx].content = newVal;
+  scheduleSave();
+}
+
+function confirmInsert() {
+  const type = pendingInlineType;
+  if (!type) return;
+
+  let token = '';
+  if (type === 'h3') {
+    const val = (document.getElementById('ipin').value || '').trim();
+    if (!val) { showToast('소제목을 입력하세요.'); return; }
+    token = `<h3>${val}</h3>`;
+  } else if (type === 'link') {
+    const val = document.getElementById('ipin').value;
+    const page = data.pages[currentPageIdx];
+    const linkText = (page.links[val] && page.links[val].text) ? page.links[val].text : `링크${val}`;
+    token = `[링크:${val}]`;
+  } else if (type === 'term') {
+    const val = (document.getElementById('ipin').value || '').trim();
+    if (!val) { showToast('용어를 입력하세요.'); return; }
+    token = `[용어:${val}]`;
+    // Auto-add to terms list if not already there
+    const page = data.pages[currentPageIdx];
+    if (!page.terms) page.terms = [];
+    const exists = page.terms.some(t => t.word === val);
+    if (!exists) {
+      page.terms.push({ word: val, definition: '', description: '', example: '' });
+      showToast(`✅ 커서 위치에 삽입 + 용어 탭에 "${val}" 자동 추가됨`);
+    }
+  }
+
+  insertAtCursor(token);
+  cancelInsert();
+  showToast('✅ 커서 위치에 삽입되었습니다.');
+}
+
+function cancelInsert() {
+  const area = document.getElementById('inline-popover-area');
+  if (area) area.innerHTML = '';
+  pendingInlineType = null;
+}
+
+// ── LINKS SECTION ──
+function renderLinksSection(page) {
+  if (!page.links) page.links = [];
+  let html = '<div class="item-list">';
+  page.links.forEach((link, i) => {
+    const typeHelp = link.type==='link' ? ' (URL|표시이름)' : link.type==='image' ? ' <a href="#" onclick="event.preventDefault();document.getElementById(\'img-help-modal\').classList.add(\'active\')" style="color:var(--accent);font-size:.75rem">이미지 삽입법 보기</a>' : '';
+    html += `<div class="item-card">
+      <div class="item-card-header">
+        <span class="item-badge">#${i}</span>
+        <span class="item-card-title">${esc(link.text||'링크 '+i)}</span>
+        <button class="item-del-btn" onclick="deleteItem('links',${i})">✕</button>
+      </div>
+      <div class="item-card-body">
+        <div><label>표시 텍스트 (본문에서 [링크:${i}]로 삽입)</label>
+          <input type="text" value="${esc(link.text)}" oninput="updateItem('links',${i},'text',this.value)"></div>
+        <div><label>타입</label>
+          <select onchange="updateItem('links',${i},'type',this.value)">
+            <option value="text" ${link.type==='text'?'selected':''}>text — 텍스트</option>
+            <option value="image" ${link.type==='image'?'selected':''}>image — 이미지</option>
+            <option value="link" ${link.type==='link'?'selected':''}>link — 외부링크/유튜브</option>
+            <option value="html" ${link.type==='html'?'selected':''}>html — HTML</option>
+          </select></div>
+        <div><label>내용${typeHelp}</label>
+          <textarea oninput="updateItem('links',${i},'data',this.value)">${esc(link.data||'')}</textarea></div>
+      </div></div>`;
+  });
+  html += `</div><button class="add-item-btn" onclick="addItem('links')">+ 링크 추가</button>`;
+  return html;
+}
+
+// ── TERMS SECTION (global shared) ──
+function renderTermsSection(page) {
+  if (!data.terms) data.terms = [];
+  let html = '<div style="margin-bottom:.5rem;font-size:.72rem;color:var(--ink-light);background:#f0f8f0;border:1px solid #c8e6c9;border-radius:5px;padding:.45rem .75rem">🌐 용어 사전은 <strong>모든 페이지에서 공유</strong>됩니다. 어느 페이지에서 추가해도 전체에 반영됩니다.</div>';
+  html += '<div class="item-list">';
+  data.terms.forEach((term, i) => {
+    html += `<div class="item-card">
+      <div class="item-card-header">
+        <span class="item-badge">용어</span>
+        <span class="item-card-title">${esc(term.word||'용어 '+i)}</span>
+        <button class="item-del-btn" onclick="deleteGlobalTerm(${i})">✕</button>
+      </div>
+      <div class="item-card-body">
+        <div class="item-row">
+          <div><label>용어</label><input type="text" value="${esc(term.word)}" oninput="updateGlobalTerm(${i},'word',this.value)" placeholder="용어명"></div>
+          <div><label>정의</label><input type="text" value="${esc(term.definition)}" oninput="updateGlobalTerm(${i},'definition',this.value)" placeholder="한 줄 정의"></div>
+        </div>
+        <div><label>설명</label><textarea oninput="updateGlobalTerm(${i},'description',this.value)">${esc(term.description||'')}</textarea></div>
+        <div><label>예시</label><input type="text" value="${esc(term.example||'')}" oninput="updateGlobalTerm(${i},'example',this.value)" placeholder="예시 문장"></div>
+      </div></div>`;
+  });
+  html += `</div><button class="add-item-btn" onclick="addGlobalTerm()">+ 용어 추가</button>`;
+  return html;
+}
+
+// ── PROBLEMS SECTION ──
+function renderProblemsSection(page) {
+  if (!page.problems) page.problems = [];
+  let html = '<div class="item-list">';
+  page.problems.forEach((prob, i) => {
+    const qprev = (prob.question||'').slice(0,38);
+    html += `<div class="item-card">
+      <div class="item-card-header">
+        <span class="item-badge">Q${i+1}</span>
+        <span class="item-card-title">${esc(qprev)}${qprev.length<(prob.question||'').length?'…':''}</span>
+        <button class="item-del-btn" onclick="deleteItem('problems',${i})">✕</button>
+      </div>
+      <div class="item-card-body">
+        <div><label>문제</label><textarea oninput="updateItem('problems',${i},'question',this.value)">${esc(prob.question||'')}</textarea></div>
+        <div><label>정답</label><input type="text" value="${esc(prob.answer||'')}" oninput="updateItem('problems',${i},'answer',this.value)" placeholder="정답"></div>
+        <div><label>해설</label><textarea oninput="updateItem('problems',${i},'explanation',this.value)">${esc(prob.explanation||'')}</textarea></div>
+      </div></div>`;
+  });
+  html += `</div><button class="add-item-btn" onclick="addItem('problems')">+ 문제 추가</button>`;
+  return html;
+}
+
+// ══════════════════════════════════════
+// DATA UPDATES
+// ══════════════════════════════════════
+function updateField(field, value) {
+  if (currentPageIdx < 0) return;
+  data.pages[currentPageIdx][field] = value;
+  if (field === 'title') renderSidebar();
+  scheduleSave();
+}
+function updateItem(section, idx, field, value) {
+  data.pages[currentPageIdx][section][idx][field] = value;
+  scheduleSave();
+}
+function addItem(section) {
+  const page = data.pages[currentPageIdx];
+  if (!page[section]) page[section] = [];
+  if (section==='links') page.links.push({text:'새 링크',type:'text',data:''});
+  if (section==='terms') page.terms.push({word:'',definition:'',description:'',example:''});
+  if (section==='problems') page.problems.push({question:'',answer:'',explanation:''});
+  scheduleSave();
+  document.getElementById('section-body').innerHTML = renderSectionContent(page);
+  updateTabCounts(page);
+}
+function deleteItem(section, idx) {
+  data.pages[currentPageIdx][section].splice(idx, 1);
+  scheduleSave();
+  const page = data.pages[currentPageIdx];
+  document.getElementById('section-body').innerHTML = renderSectionContent(page);
+  updateTabCounts(page);
+}
+function updateTabCounts(page) {
+  document.querySelectorAll('.sec-tab').forEach(t => {
+    if (t.textContent.includes('링크')) t.textContent = `🔗 링크 (${page.links?.length||0})`;
+    if (t.textContent.includes('용어')) t.textContent = `📖 용어 (${data.terms?.length||0})`;
+    if (t.textContent.includes('문제')) t.textContent = `❓ 문제 (${page.problems?.length||0})`;
+  });
+}
+
+// Global term management
+function addGlobalTerm() {
+  if (!data.terms) data.terms = [];
+  data.terms.push({word:'',definition:'',description:'',example:''});
+  scheduleSave();
+  const page = data.pages[currentPageIdx];
+  document.getElementById('section-body').innerHTML = renderSectionContent(page);
+  updateTabCounts(page);
+}
+function deleteGlobalTerm(idx) {
+  data.terms.splice(idx, 1);
+  scheduleSave();
+  const page = data.pages[currentPageIdx];
+  document.getElementById('section-body').innerHTML = renderSectionContent(page);
+  updateTabCounts(page);
+}
+function updateGlobalTerm(idx, field, value) {
+  if (!data.terms) data.terms = [];
+  data.terms[idx][field] = value;
+  scheduleSave();
+}
+// [링크:N] → clickable badge  |  [용어:단어] → underline
+// \n inside <p> preserved via CSS white-space:pre-wrap
+// ══════════════════════════════════════
+function contentToHTML(raw, links) {
+  if (!raw) return '';
+  let html = raw;
+  html = html.replace(/\[링크:(\d+)\]/g, (_, n) => {
+    const idx = parseInt(n);
+    const linkText = (links && links[idx] && links[idx].text) ? links[idx].text : `링크${n}`;
+    return `<span class="content-link" data-link="${n}">${linkText}</span>`;
+  });
+  html = html.replace(/\[용어:([^\]]+)\]/g, (_, w) =>
+    `<span class="content-term" data-term="${w}">${w}</span>`);
+  return html;
+}
+
+// ══════════════════════════════════════
+// PREVIEW
+// ══════════════════════════════════════
+function refreshPreview() {
+  const frame = document.getElementById('preview-frame');
+  frame.removeAttribute('sandbox');
+  frame.srcdoc = buildStudentHTML(data, currentPageIdx >= 0 ? currentPageIdx : 0);
+}
+
+// ══════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='과학교재_data.json'; a.click();
+  showToast('📥 JSON 파일이 저장되었습니다.');
+}
+function importJSON() { document.getElementById('json-file-input').click(); }
+function loadJSONFile(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      data = JSON.parse(e.target.result);
+      currentPageIdx = -1; renderSidebar(); saveToLocalStorage();
+      if (data.pages.length > 0) selectPage(0);
+      showToast('✅ JSON 파일을 불러왔습니다.');
+    } catch(err) { showToast('❌ JSON 파일 형식이 잘못되었습니다.'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+function exportForStudent() {
+  const html = buildStudentHTML(data, 0);
+  const blob = new Blob([html],{type:'text/html'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='과학학습_student.html'; a.click();
+  showToast('📤 학생용 HTML을 내보냈습니다!');
+}
+function openStudentPreview() {
+  const html = buildStudentHTML(data, currentPageIdx>=0?currentPageIdx:0);
+  window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank');
+}
+
+// ══════════════════════════════════════
+// BUILD STUDENT HTML
+// ══════════════════════════════════════
+function buildStudentHTML(bookData, initialPage) {
+  const startPage = (typeof initialPage==='number' && initialPage>=0) ? initialPage : 0;
+  const processed = JSON.parse(JSON.stringify(bookData));
+  processed.pages.forEach(p => { p.content = contentToHTML(p.content||'', p.links||[]); });
+  // Ensure global terms are available
+  if (!processed.terms) processed.terms = [];
+
+  const safeJson = JSON.stringify(processed)
+    .replace(/<\/script/gi, '<\\/script');
+  const dataScript = '<script>window.__BD='+safeJson+';window.__SP='+startPage+';<\/script>';
+
+  const css = `<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+:root{--bg:#f5f0e8;--paper:#fdfaf4;--ink:#1a1a2e;--ink-light:#4a4a6a;--accent:#c44569;--accent2:#2d6a8e;--accent3:#2d8e6a;--panel-bg:#1a1a2e;--panel-text:#e8e4d8;--term-bg:#fff8f0;--border:#d4c9b0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{background:var(--panel-bg);padding:0 1.4rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:2px solid var(--accent);color:var(--panel-text)}
+.hd-left{display:flex;align-items:center;gap:10px}
+.hd-left h1{font-family:'Noto Serif KR',serif;font-size:1rem;font-weight:700}
+.hd-left h1::before{content:'⚗ '}
+.page-indicator{font-size:.76rem;color:#aaa8c4}
+.main-container{display:flex;flex:1;overflow:hidden}
+
+/* Page nav sidebar */
+.pnav{width:160px;background:#14122a;border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.pnav-hd{padding:.6rem .9rem .4rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#5552a0;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.pnav-list{flex:1;overflow-y:auto;padding:.25rem}
+.pnav-list::-webkit-scrollbar{width:3px}.pnav-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+.pnav-item{display:flex;align-items:center;gap:5px;padding:.42rem .6rem;border-radius:5px;cursor:pointer;color:#b0add5;font-size:.78rem;font-weight:500;transition:background .12s;margin-bottom:1px}
+.pnav-item:hover{background:rgba(255,255,255,.07)}.pnav-item.active{background:var(--accent);color:#fff}
+.pnav-num{font-size:.62rem;background:rgba(255,255,255,.14);padding:.06rem .3rem;border-radius:3px;flex-shrink:0}
+
+/* Content — takes exactly half of remaining space */
+.content-area{flex:1;min-width:0;background:var(--paper);display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+.page-title{padding:1.1rem 1.5rem .65rem;border-bottom:1px solid var(--border)}
+.page-title h2{font-family:'Noto Serif KR',serif;font-size:1.3rem;font-weight:700;color:var(--ink);line-height:1.4}
+.content-scroll{flex:1;overflow-y:auto;padding:1.2rem 1.5rem}
+.content-scroll::-webkit-scrollbar{width:4px}.content-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+#page-content{font-size:.94rem;line-height:1.9;color:var(--ink-light)}
+#page-content p{margin-bottom:.85rem;white-space:pre-wrap}
+#page-content h3{font-family:'Noto Serif KR',serif;color:var(--ink);margin:1.1rem 0 .4rem;font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:.22rem}
+.content-link{display:inline-block;background:#e8f4fd;border:1px solid #b8d8f0;border-radius:5px;padding:.08rem .55rem;color:#2d6a8e;font-size:.8rem;font-weight:700;cursor:pointer;margin:0 2px;transition:all .14s;text-decoration:none;vertical-align:middle}
+.content-link:hover{background:#2d6a8e;color:#fff}
+.content-term{background:linear-gradient(180deg,transparent 58%,rgba(196,69,105,.22) 58%);cursor:pointer;font-weight:600;color:var(--ink);padding:0 2px;border-radius:2px;transition:background .13s}
+.content-term:hover{background:linear-gradient(180deg,transparent 58%,rgba(196,69,105,.4) 58%)}
+
+/* Right — same flex:1 as content-area for equal 50/50 split */
+.right-panel{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.right-top{flex:1;min-height:60px;display:flex;flex-direction:column;background:var(--paper);overflow:hidden}
+.right-divider{height:6px;background:var(--border);cursor:row-resize;flex-shrink:0;position:relative;transition:background .15s}
+.right-divider:hover,.right-divider.drag{background:var(--accent2)}
+.right-divider::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:32px;height:3px;border-radius:2px;background:rgba(45,106,142,.4)}
+.right-bottom{flex:1;min-height:60px;display:flex;flex-direction:column;background:var(--paper);overflow:hidden}
+.panel-hd{padding:.6rem 1.1rem;border-bottom:1px solid var(--border);background:#f0ebe0;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.panel-hd span{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-light)}
+.link-tabs{display:flex;padding:0 1rem;border-bottom:1px solid var(--border);background:var(--paper);overflow-x:auto;flex-shrink:0}
+.link-tab{padding:.48rem .85rem;font-size:.74rem;cursor:pointer;border-bottom:2px solid transparent;color:var(--ink-light);white-space:nowrap;font-weight:500;transition:all .13s}
+.link-tab.active{color:var(--accent2);border-bottom-color:var(--accent2);font-weight:700}
+#link-display,#term-display{flex:1;overflow-y:auto;padding:.95rem 1.1rem}
+#link-display::-webkit-scrollbar,#term-display::-webkit-scrollbar{width:4px}
+#link-display::-webkit-scrollbar-thumb,#term-display::-webkit-scrollbar-thumb{background:var(--border)}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#bbb;font-size:.8rem;gap:.4rem;text-align:center}
+.placeholder .phi{font-size:1.7rem}
+.link-text{font-size:.88rem;line-height:1.82;color:var(--ink-light);background:rgba(45,106,142,.06);border-left:3px solid var(--accent2);padding:.85rem 1rem;border-radius:0 6px 6px 0;white-space:pre-wrap}
+.img-ph{background:linear-gradient(135deg,#e8e0f0,#d0e8f0);border-radius:8px;padding:2.5rem 1.5rem;text-align:center;color:var(--ink-light);font-size:.83rem}
+.ext-link a,.yt-btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent2);color:#fff;padding:.55rem 1.1rem;border-radius:6px;text-decoration:none;font-size:.83rem;font-weight:600;cursor:pointer;border:none;margin-bottom:.35rem}
+.yt-embed-wrap{width:100%}
+.term-card{background:var(--term-bg);border:1px solid var(--border);border-radius:10px;padding:.95rem 1.1rem;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.t-word{font-family:'Noto Serif KR',serif;font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:.32rem}
+.t-def{font-size:.84rem;font-weight:600;color:var(--ink);margin-bottom:.52rem;padding-bottom:.52rem;border-bottom:1px dashed var(--border)}
+.t-desc{font-size:.82rem;color:var(--ink-light);line-height:1.72;margin-bottom:.42rem}
+.t-ex{font-size:.79rem;color:var(--accent3);background:rgba(45,142,106,.07);padding:.42rem .72rem;border-radius:5px;border-left:3px solid var(--accent3)}
+.t-ex::before{content:'예시: ';font-weight:700}
+
+/* Bottom nav */
+.bottom-nav{background:var(--panel-bg);border-top:1px solid #2a2a4e;padding:.6rem 1.4rem;display:flex;align-items:center;gap:.65rem;flex-shrink:0}
+.nav-btn{padding:.42rem .95rem;border:none;border-radius:6px;font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .14s}
+.nbsec{background:rgba(255,255,255,.08);color:var(--panel-text);border:1px solid rgba(255,255,255,.15)}.nbsec:hover{background:rgba(255,255,255,.16)}
+.nbacc{background:var(--accent);color:#fff}.nbgrn{background:var(--accent3);color:#fff}
+.nav-btn:disabled{opacity:.35;cursor:not-allowed}
+.spacer{flex:1}
+.pnum{font-size:.74rem;color:#aaa8c4;padding:0 .3rem}
+
+/* Problem Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,30,.72);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.active{display:flex}
+.modal{background:var(--paper);border-radius:14px;padding:1.7rem;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:mi .2s ease;display:flex;flex-direction:column;max-height:88vh}
+@keyframes mi{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'Noto Serif KR',serif;font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.5rem;flex-shrink:0}
+.modal-pnav{display:flex;align-items:center;gap:.55rem;margin-bottom:.9rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.mpnav-btn{background:none;border:1px solid var(--border);color:var(--ink-light);padding:.25rem .72rem;border-radius:5px;font-size:.76rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:600;transition:all .14s}.mpnav-btn:hover{background:var(--accent2);color:#fff;border-color:var(--accent2)}.mpnav-btn:disabled{opacity:.3;cursor:not-allowed}
+.mpnav-cnt{font-size:.78rem;color:var(--ink-light);padding:0 .25rem}
+.prob-scroll{overflow-y:auto;flex:1}
+.prob-item{border:1px solid var(--border);border-radius:10px;padding:.95rem 1.1rem;background:#fefcf8}
+.prob-q{font-size:.88rem;font-weight:600;color:var(--ink);line-height:1.7;margin-bottom:.75rem}
+.prob-q::before{content:'Q. ';color:var(--accent2);font-weight:700}
+.ans-btn{background:none;border:1px solid var(--accent2);color:var(--accent2);padding:.28rem .82rem;border-radius:5px;font-size:.76rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:600;transition:all .14s}.ans-btn:hover{background:var(--accent2);color:#fff}
+.ans-box{display:none;margin-top:.72rem;padding:.72rem .9rem;background:linear-gradient(135deg,#f0f8f0,#e8f5f0);border-radius:6px;border-left:3px solid var(--accent3)}
+.ans-box.show{display:block;animation:fi .18s ease}
+.ans-label{font-size:.7rem;font-weight:700;color:var(--accent3);text-transform:uppercase;margin-bottom:.22rem}
+.ans-text{font-size:.85rem;color:var(--ink);font-weight:600;margin-bottom:.22rem}
+.ans-exp{font-size:.79rem;color:var(--ink-light);line-height:1.62}
+.modal-close{width:100%;margin-top:.9rem;padding:.55rem;background:var(--ink);color:#fff;border:none;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;flex-shrink:0}
+.st-toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;padding:.5rem 1.2rem;border-radius:30px;font-size:.78rem;font-weight:600;opacity:0;transition:all .3s;pointer-events:none;z-index:200}.st-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>`;
+
+  const body = `
+<header>
+  <div class="hd-left"><h1>과학 학습 시스템</h1></div>
+  <span class="page-indicator" id="page-indicator">1 / 1</span>
+</header>
+<div class="main-container">
+  <div class="pnav">
+    <div class="pnav-hd">목차</div>
+    <div class="pnav-list" id="pnav-list"></div>
+  </div>
+  <div class="content-area">
+    <div class="page-title"><h2 id="current-title">로딩 중...</h2></div>
+    <div class="content-scroll"><div id="page-content"></div></div>
+  </div>
+  <div class="right-panel">
+    <div class="right-top">
+      <div class="panel-hd"><span>📎</span><span>추가 자료</span></div>
+      <div class="link-tabs" id="link-tabs"></div>
+      <div id="link-display"><div class="placeholder"><span class="phi">📖</span><span>본문의 링크를 클릭하세요</span></div></div>
+    </div>
+    <div class="right-divider" id="right-divider"></div>
+    <div class="right-bottom">
+      <div class="panel-hd"><span>📝</span><span>용어 사전</span></div>
+      <div id="term-display"><div class="placeholder"><span class="phi">🔍</span><span>밑줄 용어를 클릭하세요</span></div></div>
+    </div>
+  </div>
+</div>
+<div class="bottom-nav">
+  <button class="nav-btn nbsec" id="btn-prev" onclick="changePage(-1)">◀ 이전</button>
+  <button class="nav-btn nbsec" id="btn-next" onclick="changePage(1)">다음 ▶</button>
+  <span class="pnum" id="pnum-bot"></span>
+  <span class="spacer"></span>
+  <button class="nav-btn nbgrn" onclick="openProblems()">📝 개념 확인 문제</button>
+  <button class="nav-btn nbacc" onclick="captureScreen()">📷 캡처</button>
+</div>
+<div class="modal-overlay" id="prob-modal">
+  <div class="modal">
+    <div class="modal-title">📝 개념 확인 문제</div>
+    <div class="modal-pnav">
+      <button class="mpnav-btn" id="mp-prev" onclick="prevProb()">◀ 이전</button>
+      <span class="mpnav-cnt" id="mp-cnt">1 / 1</span>
+      <button class="mpnav-btn" id="mp-next" onclick="nextProb()">다음 ▶</button>
+    </div>
+    <div class="prob-scroll" id="prob-content"></div>
+    <button class="modal-close" onclick="closeModal()">닫기</button>
+  </div>
+</div>
+<div class="st-toast" id="st-toast"></div>`;
+
+  const logic = (function(){
+  // Built as a function to avoid any template-literal or string escaping issues
+  var lines = [];
+  lines.push('<script>');
+  lines.push('(function(){');
+  lines.push('var BD=window.__BD, cp=window.__SP||0, curProb=0;');
+  lines.push('function pnavRender(){');
+  lines.push('  var el=document.getElementById("pnav-list"); el.innerHTML="";');
+  lines.push('  BD.pages.forEach(function(p,i){');
+  lines.push('    var d=document.createElement("div");');
+  lines.push('    d.className="pnav-item"+(i===cp?" active":"");');
+  lines.push('    d.innerHTML="<span class=\\"pnav-num\\">"+(i+1)+"</span>"+p.title;');
+  lines.push('    d.onclick=function(){cp=i;renderPage();};');
+  lines.push('    el.appendChild(d);');
+  lines.push('  });');
+  lines.push('}');
+  lines.push('function renderPage(){');
+  lines.push('  if(!BD||!BD.pages||!BD.pages.length)return;');
+  lines.push('  var pg=BD.pages[cp], tot=BD.pages.length;');
+  lines.push('  document.getElementById("page-indicator").textContent=(cp+1)+" / "+tot;');
+  lines.push('  document.getElementById("pnum-bot").textContent=(cp+1)+" / "+tot;');
+  lines.push('  document.getElementById("current-title").textContent=pg.title||"";');
+  lines.push('  document.getElementById("page-content").innerHTML=pg.content||"";');
+  lines.push('  document.getElementById("btn-prev").disabled=(cp===0);');
+  lines.push('  document.getElementById("btn-next").disabled=(cp===tot-1);');
+  lines.push('  renderTabs(pg);');
+  lines.push('  var ld=document.getElementById("link-display");');
+  lines.push('  ld.innerHTML="<div class=\\"placeholder\\"><span class=\\"phi\\">\\uD83D\\uDCD6</span><span>\\ubCF8\\uBB38\\uC758 \\uB9C1\\uD06C\\uB97C \\uD074\\uB9AD\\uD558\\uC138\\uC694</span></div>";');
+  lines.push('  ld.style.padding="";');
+  lines.push('  document.getElementById("term-display").innerHTML="<div class=\\"placeholder\\"><span class=\\"phi\\">\\uD83D\\uDD0D</span><span>\\uBC11\\uC904 \\uC6A9\\uC5B4\\uB97C \\uD074\\uB9AD\\uD558\\uC138\\uC694</span></div>";');
+  lines.push('  document.querySelectorAll(".content-term").forEach(function(el){el.addEventListener("click",function(){showTerm(el.dataset.term);});});');
+  lines.push('  document.querySelectorAll(".content-link").forEach(function(el){el.addEventListener("click",function(){showLink(parseInt(el.dataset.link));});});');
+  lines.push('  pnavRender();');
+  lines.push('}');
+  lines.push('function renderTabs(pg){');
+  lines.push('  var tabs=document.getElementById("link-tabs"); tabs.innerHTML="";');
+  lines.push('  if(!pg.links)return;');
+  lines.push('  pg.links.forEach(function(lk,i){var t=document.createElement("div");t.className="link-tab";t.textContent=lk.text;t.onclick=function(){showLink(i);};tabs.appendChild(t);});');
+  lines.push('}');
+  lines.push('function showLink(idx){');
+  lines.push('  var pg=BD.pages[cp]; if(!pg.links||!pg.links[idx])return;');
+  lines.push('  var lk=pg.links[idx];');
+  lines.push('  document.querySelectorAll(".link-tab").forEach(function(t,i){t.classList.toggle("active",i===idx);});');
+  lines.push('  var disp=document.getElementById("link-display");');
+  lines.push('  disp.innerHTML=""; disp.style.padding="";');
+  lines.push('  if(lk.type==="text"){');
+  lines.push('    disp.innerHTML="<div class=\\"link-text\\">"+lk.data+"</div>";');
+  lines.push('  } else if(lk.type==="image"){');
+  lines.push('    if(lk.data.indexOf("placeholder|")===0){');
+  lines.push('      var cap=lk.data.split("|")[1]||"";');
+  lines.push('      disp.innerHTML="<div class=\\"img-ph\\"><div style=\\"font-size:2.4rem;margin-bottom:.5rem\\">\uD83D\uDDBC</div><div>"+cap+"</div></div>";');
+  lines.push('    } else {');
+  lines.push('      disp.innerHTML="<img src=\\""+lk.data+"\\" style=\\"max-width:100%;border-radius:8px;display:block\\" alt=\\"\\uC774\\uBBF8\\uC9C0\\">";');
+  lines.push('    }');
+  lines.push('  } else if(lk.type==="link"){');
+  lines.push('    var pts=lk.data.split("|"),url=pts[0],lbl=pts[1]||url;');
+  lines.push('    if(url.indexOf("youtube.com")!==-1||url.indexOf("youtu.be")!==-1){');
+  lines.push('      var vid="",m;');
+  lines.push('      m=url.match(/[?&]v=([^&]+)/); if(m) vid=m[1];');
+  lines.push('      if(!vid){m=url.match(/youtu\\.be\\/([^?&]+)/); if(m) vid=m[1];}');
+  lines.push('      if(!vid){m=url.match(/shorts\\/([^?&]+)/); if(m) vid=m[1];}');
+  lines.push('      if(vid){');
+  lines.push('        disp.style.padding="0";');
+  lines.push('        var wrap=document.createElement("div");');
+  lines.push('        wrap.style.cssText="display:flex;flex-direction:column;height:100%;background:#000";');
+  lines.push('        var yfr=document.createElement("iframe");');
+  lines.push('        yfr.src="https://www.youtube.com/embed/"+vid+"?rel=0";');
+  lines.push('        yfr.style.cssText="width:100%;flex:1;border:none;min-height:0";');
+  lines.push('        yfr.setAttribute("allowfullscreen","");');
+  lines.push('        yfr.setAttribute("allow","accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture");');
+  lines.push('        var cap2=document.createElement("div");');
+  lines.push('        cap2.style.cssText="padding:.35rem .7rem;font-size:.72rem;color:#ccc;background:#111;flex-shrink:0";');
+  lines.push('        cap2.textContent=lbl;');
+  lines.push('        wrap.appendChild(yfr); wrap.appendChild(cap2);');
+  lines.push('        disp.appendChild(wrap);');
+  lines.push('      } else {');
+  lines.push('        var ya=document.createElement("a"); ya.href=url; ya.target="_blank";');
+  lines.push('        ya.style.cssText="display:inline-flex;align-items:center;gap:6px;background:#ff0000;color:#fff;padding:.55rem 1.1rem;border-radius:6px;text-decoration:none;font-size:.83rem;font-weight:600;margin:.9rem";');
+  lines.push('        ya.textContent="\u25B6 "+lbl; disp.appendChild(ya);');
+  lines.push('      }');
+  lines.push('    } else {');
+  lines.push('      var la=document.createElement("a"); la.href=url; la.target="_blank";');
+  lines.push('      la.style.cssText="display:inline-flex;align-items:center;gap:6px;background:var(--accent2);color:#fff;padding:.55rem 1.1rem;border-radius:6px;text-decoration:none;font-size:.83rem;font-weight:600;margin:.9rem";');
+  lines.push('      la.textContent="\uD83D\uDD17 "+lbl; disp.appendChild(la);');
+  lines.push('    }');
+  lines.push('  } else if(lk.type==="html"){');
+  lines.push('    var doc=lk.data;');
+  lines.push('    if(doc.indexOf("<html")===-1&&doc.indexOf("<!DOCTYPE")===-1){');
+  lines.push('      doc="<!DOCTYPE html><html><head><meta charset=\\"UTF-8\\"><style>*{box-sizing:border-box}html,body{margin:0;padding:8px;font-family:sans-serif;font-size:13px;height:100%;overflow:auto}</style></head><body>"+doc+"</body></html>";');
+  lines.push('    }');
+  lines.push('    disp.style.padding="0";');
+  lines.push('    var hfr=document.createElement("iframe");');
+  lines.push('    hfr.setAttribute("sandbox","allow-scripts allow-same-origin");');
+  lines.push('    hfr.style.cssText="width:100%;height:100%;border:none;display:block";');
+  lines.push('    disp.appendChild(hfr);');
+  lines.push('    hfr.srcdoc=doc;');
+  lines.push('  } else {');
+  lines.push('    disp.innerHTML="<div class=\\"link-text\\">"+lk.data+"</div>";');
+  lines.push('  }');
+  lines.push('}');
+  lines.push('function showTerm(word){');
+  lines.push('  var terms=BD.terms||[]; var tm=null;');
+  lines.push('  for(var i=0;i<terms.length;i++){if(terms[i].word===word){tm=terms[i];break;}}');
+  lines.push('  if(!tm)return;');
+  lines.push('  document.getElementById("term-display").innerHTML="<div class=\\"term-card\\"><div class=\\"t-word\\">"+tm.word+"</div><div class=\\"t-def\\">"+tm.definition+"</div><div class=\\"t-desc\\">"+tm.description+"</div>"+(tm.example?"<div class=\\"t-ex\\">"+tm.example+"</div>":"")+"</div>";');
+  lines.push('}');
+  lines.push('function changePage(dir){var tot=BD.pages.length,nx=cp+dir;if(nx<0||nx>=tot)return;cp=nx;renderPage();}');
+  lines.push('function openProblems(){');
+  lines.push('  var probs=(BD.pages[cp].problems||[]);');
+  lines.push('  if(!probs.length){stToast("\uC774 \uD398\uC774\uC9C0\uC5D0 \uBB38\uC81C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");return;}');
+  lines.push('  curProb=0; renderProb();');
+  lines.push('  document.getElementById("prob-modal").classList.add("active");');
+  lines.push('}');
+  lines.push('function renderProb(){');
+  lines.push('  var probs=(BD.pages[cp].problems||[]),tot=probs.length,p=probs[curProb];');
+  lines.push('  document.getElementById("mp-cnt").textContent=(curProb+1)+" / "+tot;');
+  lines.push('  document.getElementById("mp-prev").disabled=(curProb===0);');
+  lines.push('  document.getElementById("mp-next").disabled=(curProb===tot-1);');
+  lines.push('  var html="<div class=\\"prob-item\\"><div class=\\"prob-q\\">"+p.question+"</div>";');
+  lines.push('  html+="<button class=\\"ans-btn\\" onclick=\\"toggleAns()\\">\\uC815\\uB2F5 \\uD655\\uC778</button>";');
+  lines.push('  html+="<div class=\\"ans-box\\" id=\\"ans-box\\"><div class=\\"ans-label\\">\\uC815\\uB2F5</div><div class=\\"ans-text\\">"+p.answer+"</div>";');
+  lines.push('  if(p.explanation) html+="<div class=\\"ans-exp\\">\\uD83D\\uDCA1 "+p.explanation+"</div>";');
+  lines.push('  html+="</div></div>";');
+  lines.push('  document.getElementById("prob-content").innerHTML=html;');
+  lines.push('}');
+  lines.push('window.prevProb=function(){if(curProb>0){curProb--;renderProb();}};');
+  lines.push('window.nextProb=function(){var tot=(BD.pages[cp].problems||[]).length;if(curProb<tot-1){curProb++;renderProb();}};');
+  lines.push('window.toggleAns=function(){var b=document.getElementById("ans-box");b.classList.toggle("show");b.previousElementSibling.textContent=b.classList.contains("show")?"\uC815\uB2F5 \uC228\uAE30\uAE30":"\uC815\uB2F5 \uD655\uC778";};');
+  lines.push('window.closeModal=function(){document.getElementById("prob-modal").classList.remove("active");};');
+  lines.push('window.changePage=changePage; window.openProblems=openProblems;');
+  lines.push('window.captureScreen=function(){stToast("\uCE90\uCC98\uB294 \uD559\uC0DD\uC6A9 HTML \uD30C\uC77C\uC5D0\uC11C \uC0AC\uC6A9\uD558\uC138\uC694.");};');
+  lines.push('function stToast(msg){var t=document.getElementById("st-toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},2200);}');
+  lines.push('document.addEventListener("keydown",function(e){if(e.key==="ArrowLeft")changePage(-1);if(e.key==="ArrowRight")changePage(1);if(e.key==="Escape")window.closeModal();});');
+  lines.push('(function(){');
+  lines.push('  var dv=document.getElementById("right-divider"); if(!dv)return;');
+  lines.push('  var pn=dv.parentElement, tp=dv.previousElementSibling, bt=dv.nextElementSibling;');
+  lines.push('  var dragging=false, startY=0, startH=0;');
+  lines.push('  function startDrag(y){');
+  lines.push('    dragging=true; startY=y; startH=tp.getBoundingClientRect().height;');
+  lines.push('    dv.classList.add("drag");');
+  lines.push('    document.body.style.cssText="user-select:none;-webkit-user-select:none;cursor:row-resize";');
+  lines.push('  }');
+  lines.push('  function doDrag(y){');
+  lines.push('    if(!dragging)return;');
+  lines.push('    var panelH=pn.getBoundingClientRect().height;');
+  lines.push('    var divH=dv.offsetHeight;');
+  lines.push('    var newH=startH+(y-startY);');
+  lines.push('    newH=Math.max(60,Math.min(panelH-divH-60,newH));');
+  lines.push('    tp.style.cssText="flex:0 0 "+newH+"px;min-height:0;overflow:hidden;display:flex;flex-direction:column;background:var(--paper)";');
+  lines.push('    bt.style.cssText="flex:1 1 0;min-height:60px;overflow:hidden;display:flex;flex-direction:column;background:var(--paper)";');
+  lines.push('  }');
+  lines.push('  function endDrag(){');
+  lines.push('    if(!dragging)return;');
+  lines.push('    dragging=false; dv.classList.remove("drag");');
+  lines.push('    document.body.style.cssText="";');
+  lines.push('  }');
+  lines.push('  dv.addEventListener("mousedown",function(e){startDrag(e.clientY);e.preventDefault();});');
+  lines.push('  document.addEventListener("mousemove",function(e){doDrag(e.clientY);});');
+  lines.push('  document.addEventListener("mouseup",endDrag);');
+  lines.push('  dv.addEventListener("touchstart",function(e){startDrag(e.touches[0].clientY);e.preventDefault();},{passive:false});');
+  lines.push('  document.addEventListener("touchmove",function(e){if(dragging){doDrag(e.touches[0].clientY);e.preventDefault();}},{passive:false});');
+  lines.push('  document.addEventListener("touchend",endDrag);');
+  lines.push('})();');
+  lines.push('renderPage();');
+  lines.push('})();');
+  lines.push('<\/script>');
+  return lines.join('\n');
+})();
+
+  return '<!DOCTYPE html>\n<html lang="ko">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n<title>과학 학습 시스템</title>\n' + dataScript + '\n' + css + '\n</head>\n<body>\n' + body + '\n' + logic + '\n</body>\n</html>';
+}
+
+// ══════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════
+function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function showConfirm(msg,cb){document.getElementById('confirm-msg').textContent=msg;confirmCallback=cb;document.getElementById('confirm-modal').classList.add('active');}
+function closeConfirm(){document.getElementById('confirm-modal').classList.remove('active');}
+document.getElementById('confirm-ok').addEventListener('click',()=>{closeConfirm();if(confirmCallback){confirmCallback();confirmCallback=null;}});
+
+init();
+</script>
+</body>
+</html>
